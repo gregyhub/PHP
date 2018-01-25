@@ -1,0 +1,49 @@
+
+
+    /* =============================
+    === LES TABLES DE VERITES ======
+    ================================*/
+
+    /* 
+    (0 = false / 1 = true)
+
+        ET - AND - && 
+        // Par exemple : tu me donne 100balles ET un mars ! ou rien.
+     ___________________
+    |    O - 0 => 0     |
+    |    1 - 0 => 0     |
+    |    0 - 1 => 0     |
+    |    1 - 1 => 1     |
+    |___________________|
+    */
+
+
+    /* 
+    (0 = false / 1 = true)
+
+        OU - OR - || 
+        // Par exemple : Tu veux le sel et/ou le poivre ?
+        // Le 'OU informatique' équivaut au 'et/ou' de la langue française. 
+        // en effet, je peux choisir de prendre le Sel. Le Poivre. Ou les 2.
+     ___________________
+    |    O - 0 => 0     |
+    |    1 - 0 => 1     |
+    |    0 - 1 => 1     |
+    |    1 - 1 => 1     |
+    |___________________|
+    */
+
+    /* 
+    (0 = false / 1 = true)
+
+        OU Exclusif - XOR - 
+        // Par exemple : Tu vas à Droite OU tu va à gauche ?
+        // c'est le 'OU Exclusif', il n'est pas possible d'aller des 2 cotés en même temps.
+     ___________________
+    |    O - 0 => 0     |
+    |    1 - 0 => 1     |
+    |    0 - 1 => 1     |
+    |    1 - 1 => 0     |
+    |___________________|
+    */
+
