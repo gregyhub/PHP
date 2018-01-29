@@ -3,21 +3,20 @@
 //document ready
 $(function(){
 
-    $('#inscription > #pseudo').on('focusin', function(e){
-       test = $('#pseudo').parent();
-       console.log(test);
-       test.remove('.alert');
+    $('#inscription #pseudo').on('focus', function(e){
+       $('#pseudo').parent().find('.alert').remove();
+       $('#pseudo').parent().removeClass('has-error');
     });
   
     $('#inscription #pseudo').on('focusout', function(e){
         //event sur la saisie dans l'input pseudo
         //je déclanche une requete ajax
         val = $(this).val();
-        $.ajax({
+        /* $.ajax({
             url: "inc/ajax.php",
             type: 'post',
             data: 'pseudo=' + val
-          })    
+          })    */ 
           $.post(
             'inc/ajax.php', // Le fichier cible côté serveur.
             {
@@ -39,6 +38,17 @@ $(function(){
 
             $('#pseudo').parent().append(msg);
             // Du code pour gérer le retour de l'appel AJAX.
+        }
+    });
+
+    /* FONCTIONS pour la gestion des catégories dans le formulaire gestion_boutique */
+    $('#selectCateg').on("change", function(){
+        if($(this).val()=='nouvelleCat'){
+            $('.ajout-categ').show();
+            $('.ajout-categ').val('');
+        }else {
+            $('.ajout-categ').hide();
+            $('.ajout-categ').val($(this).val());
         }
     });
 

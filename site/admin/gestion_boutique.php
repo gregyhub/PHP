@@ -1,7 +1,11 @@
 <?php
     require_once('../inc/init.php');
 
+   
+
+    //formulaire Ajout/modification d'un produit
     if($_POST){
+
         //je fais les controles sur les champs 
         $controleChamps = champVide($_POST);
         $errorInscription = $controleChamps['champsvides'];
@@ -9,7 +13,26 @@
         if($errorInscription['nbError']==0) {
             //il n'y a pas de champs vide donc je continue de tester les champs
 
-            $listeChamps =  $controleChamps['champsvalides'];
+            $listeChamps =  $controleChamps['champsvalides']; // cette variable contient tous les paramètres à envyer pour la requete sql.
+
+            //controle sur la photo
+            if($_FILES['photo']['name']){
+            
+                $uploadPhoto = UploadPhoto($_FILES['photo']);
+                echo $uploadPhoto['message'];
+                $listeChamps['photo']=$uploadPhoto['nom']; // le nom du fichier photo
+            }else{
+                $listeChamps['photo']='';
+            }
+
+
+
+            //je gere le paramtre 'catégorie' pour la requete
+            if(empty($_POST["categorie"])) {
+                $listeChamps['categorie'] = $listeChamps['selectCateg'];
+            }
+            unset( $listeChamps['selectCateg']);
+
             $sql = "INSERT INTO produit values (NULL, :reference, :categorie, :titre, :description, :couleur, :taille, :public, :photo, :prix, :stock)";
            
             $insert = executeRequete($sql,  $listeChamps);
@@ -59,10 +82,82 @@
             }
             else{
                 //si il y a des articles, je les affiche ici
+                //je vais afficher un tableau avec comme entete le nom des champs.
+                ?>
+                <table class="table  table-striped table-hover">
+                    <tr>
+                    <?php
+                        //je génère les entete de colonnes
+                        $nbColonnes = $produits->columnCount();
+                        for($i=0; $i<$nbColonnes; $i++){
+                            $infosColonne = $produits->getColumnMeta($i);
+                            //donne dans un tableau les infos pour une colonne pour chaque index de  0 à N.
+                            //ce tableau, à l'index 'name' donne le nom du champs.
+                            ?>
+                            <th class="text-center"><?= $infosColonne['name'] ?></th>
+                            <?php
+                        }
+                    ?>
+                        <th class="text-center">Modifier</th>
+                        <th class="text-center">Supprimer</th>
+                    </tr> <!-- fin de ligne d'entete -->
+                <?php
+                    while($OneProd = $produits->fetch(PDO::FETCH_ASSOC)){
+                        $idProd = $OneProd['id_produit'];
+                        ?>
+                        <tr>
+                        <?php
+                        foreach($OneProd as $infoProd){
+                            
+                            ?>
+                            <td class="text-center"><?= $infoProd ?></td>
+                            <?php
+                            //
+                        }
+                        ?>
+                            <th class="text-center"><a href="?action=modifier&id_produit=<?= $idProd ?>"><span class="glyphicon glyphicon-pencil"></span><a></th>
+                            <th class="text-center"><a href="?action=supprimer&id_produit=<?= $idProd ?>"><span class="glyphicon glyphicon-remove"></span></a></th>
+                        </tr>
+                        <?php
+                    }
+                ?>
+                </table>
+
+                <?php
+                
 
             }
         }
-        elseif(isset($_GET['action']) && $_GET['action']=='ajout'){
+        elseif(isset($_GET['action'])){
+            
+            if($_GET['action']=='modifier'){
+                if(isset($_GET['id_produit'])){
+                //je vérifie que l'id existe
+                    $sql="SELECT * FROM produit WHERE id_produit=:id_produit";
+                    $produitAModifier = executeRequete($sql, array('id_produit' => $_GET['id_produit']));
+                    if($produitAModifier->rowCount()==0){
+                        ?>
+                        <div class="jumbotron">
+                            <p>Le produit que vous souhaitez modifier n'existe pas.</p>
+                        </div>
+                        <?php
+                    } elseif($produitAModifier->rowCount()==1){
+                        //le produit existe dans la base
+                        $_GET['action']='ajout';
+                        $_POST=$produitAModifier->fetch(PDO::FETCH_ASSOC);
+                        vdm($_GET);
+                    }
+                }else{
+                    //l'action correspond à 'modifier' mais le 2eme parametre id est différent 
+                    ?>
+                    <div class="jumbotron">
+                        <p>l'action que vous demandez n'existe pas</p>
+                    </div>
+                    <?php
+                }
+            }
+            if($_GET['action']=='ajout') {
+            //j'ajoute ou je modifie un produit
             //je prépare le select option pour la Categorie
             $sql = "SELECT DISTINCT categorie FROM produit";
             $AllCatProduits = executeRequete($sql);
@@ -75,11 +170,13 @@
                     <input type="text" class="form-control" id="reference" name="reference" placeholder="saisissez la reference" value="<?= $_POST['reference'] ?? '' ?>">
                     <?= $errorInscription['reference'] ?? '' ?>
                 </div>
+
                 <div class="form-group <?= isset($errorInscription['titre']) ? 'has-error' : '' ?>">
                     <label for="titre">Titre</label>
                     <input type="text" class="form-control" id="titre" name="titre" placeholder="saisissez le titre" value="<?= $_POST['titre'] ?? '' ?>">
                     <?= $errorInscription['titre'] ?? '' ?>
                 </div>
+
                 <?php
                 if($AllCatProduits->rowCount() == 0){
                     //affichage spécifique pour les catégories -> si aucnue catégorie en base pour en ajouter une nouvelle
@@ -93,68 +190,106 @@
                 }else{
                     //si j'ai déjà des catégories j'affiche un select/option
                     ?>
-                    <select class="form-control">
-                    <?php
-                    while($OneCat = $AllCatProduits->fetch(PDO::FETCH_ASSOC)){
-                        var_dump($OneCat);
-                        ?>
-                            <option><?= $OneCat['categorie'] ?></option>
+                    <div class="form-group <?= isset($errorInscription['categorie']) ? 'has-error' : '' ?>">
+                        <label for="selectCateg">Catégorie</label>
+                        <select id="selectCateg" name="selectCateg" class="form-control">
+                            <option value="choisir" selected disabled>choisissez une catégorie</option>
                         <?php
-                    }
-                    ?>
-                    </select>
+                        while($OneCat = $AllCatProduits->fetch(PDO::FETCH_ASSOC)){
+                            ?>
+                                <option value="<?=$OneCat['categorie'] ?>" <?= isset($_POST['selectCateg']) && $_POST['selectCateg'] == $OneCat['categorie'] ? 'selected' : '' ?>><?= $OneCat['categorie'] ?></option>
+                            <?php
+                        }
+                        ?>
+                            <option value="nouvelleCat" <?= isset($_POST['selectCateg']) && $_POST['selectCateg'] == "nouvelleCat" ? 'selected' : '' ?>>Ajouter une nouvelle Catégorie</option>
+                        </select>
+                    
+                        <input  <?= isset($_POST['selectCateg']) && $_POST['selectCateg'] == "nouvelleCat"  ? '' :  'style="display:none;"' ?>   type="text" class="form-control ajout-categ" id="categorie" name="categorie" placeholder="saisissez la categorie" value="<?= $_POST['categorie'] ?? '' ?>">
+                        <?= $errorInscription['categorie'] ?? '' ?>
+                    </div>
                     <?php
                 }
-                
                 ?>
                 <div class="form-group <?= isset($errorInscription['description']) ? 'has-error' : '' ?>">
-                    <label for="description">Description -> textarea</label>
-                    <input type="text" class="form-control" id="description" name="description" placeholder="saisissez la description" value="<?= $_POST['description'] ?? '' ?>">
+                    <label for="description">Description</label>
+                    <textarea class="form-control" id="description" name="description" placeholder="saisissez la description"><?= $_POST['description'] ?? '' ?></textarea>
                     <?= $errorInscription['description'] ?? '' ?>
                 </div>
+
                 <div class="form-group <?= isset($errorInscription['couleur']) ? 'has-error' : '' ?>">
                     <label for="couleur">Couleur</label>
                     <input type="text" class="form-control" id="couleur" name="couleur" placeholder="saisissez la couleur" value="<?= $_POST['couleur'] ?? '' ?>">
                     <?= $errorInscription['couleur'] ?? '' ?>
                 </div>
+                
                 <div class="form-group <?= isset($errorInscription['taille']) ? 'has-error' : '' ?>">
                     <label for="taille">Taille</label>
-                    <input type="text" class="form-control" id="taille" name="taille" placeholder="saisissez la taille" value="<?= $_POST['taille'] ?? '' ?>">
+                    <select class="form-control" id="taille" name="taille">
+                        <option value="s">S</option>
+                        <option value="m">M</option>
+                        <option value="l">L</option>
+                        <option value="xl">XL</option>
+                    </select>                   
                     <?= $errorInscription['taille'] ?? '' ?>
                 </div>
+
                 <div class="form-group <?= isset($errorInscription['public']) ? 'has-error' : '' ?>">
                     <label for="public">Public</label>
-                    <input type="text" class="form-control" id="public" name="public" placeholder="saisissez le public" value="<?= $_POST['public'] ?? '' ?>">
+                    <div class="radio">
+                        <label>
+                            <input type="radio" name="public" id="publicm" value="m" checked>
+                            Homme
+                        </label>
+                    </div>
+                    <div class="radio">
+                        <label>
+                            <input type="radio" name="public" id="publicmf" value="f">
+                            Femme
+                        </label>
+                    </div>
+                    <div class="radio">
+                        <label>
+                            <input type="radio" name="public" id="publicmmixte" value="mixte">
+                            Mixte
+                        </label>
+                    </div>
+
                     <?= $errorInscription['public'] ?? '' ?>
                 </div>
+
                 <div class="form-group <?= isset($errorInscription['photo']) ? 'has-error' : '' ?>">
-                    <label for="photo">photo -> fichier + changer le FORM</label>
-                    <input type="text" class="form-control" id="photo" name="photo" placeholder="saisissez la photo" value="<?= $_POST['photo'] ?? '' ?>">
+                    <label for="photo">photo </label>
+                    <input type="file" class="form-control" id="photo" name="photo" value="<?= $_POST['photo'] ?? '' ?>">
                     <?= $errorInscription['photo'] ?? '' ?>
                 </div>
+                <!-- si il y a déjà une photo dans la base, je l'affiche dans la balise img -->
+                <?= !empty($_POST['photo']) ? 
+                    '<img src="'.ROOT.'photos'.$_POST['photo'].'" alt="" title="" />'
+                    : '' 
+                ?>
+
                 <div class="form-group <?= isset($errorInscription['prix']) ? 'has-error' : '' ?>">
                     <label for="prix">prix</label>
                     <input type="text" class="form-control" id="prix" name="prix" placeholder="saisissez le prix" value="<?= $_POST['prix'] ?? '' ?>">
                     <?= $errorInscription['prix'] ?? '' ?>
                 </div>
+
                 <div class="form-group <?= isset($errorInscription['stock']) ? 'has-error' : '' ?>">
                     <label for="stock">Stock</label>
                     <input type="text" class="form-control" id="stock" name="stock" placeholder="saisissez le stock" value="<?= $_POST['stock'] ?? '' ?>">
                     <?= $errorInscription['stock'] ?? '' ?>
                 </div>
                 
-                
-                
                 <button type="submit" class="btn btn-primary">Créez le Produit</button>
                 <?=  $errorLog ?? '' ?>
             </form>
             <?php
-        }
+            } // fin du get action modifier / ajouter
 
         $content = ob_get_clean();
 
+        } //fin du get
     }
-
 
    
 
