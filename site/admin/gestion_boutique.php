@@ -1,43 +1,60 @@
 <?php
     require_once('../inc/init.php');
 
-   
+   //suppression d'un article
+   if(isset($_GET['action']) && $_GET['action']=='supprimer' && estConnecteEtAdmin()){
+       if(isset($_GET['id_produit'])){
+        //je vérifie que l'id existe
+            $sql="SELECT * FROM produit WHERE id_produit=:id_produit";
+            $produitASupprimer = executeRequete($sql, array('id_produit' => $_GET['id_produit']));
+            if($produitASupprimer->rowCount()==0){
+                ?>
+                <div class="jumbotron">
+                    <p>Le produit que vous souhaitez supprimer n'existe pas.</p>
+                </div>
+                <?php
+            } elseif($produitASupprimer->rowCount()==1){
+                //le produit existe dans la base, je le supprime
+                $sql="DELETE FROM produit WHERE id_produit=:id_produit";
+               executeRequete($sql, array('id_produit' => $_GET['id_produit']));
+               
+            }
+        }
+        $_GET['id_produit']='';
+        $_GET['action']='affichage';
+   }
 
     //formulaire Ajout/modification d'un produit
-    if($_POST){
-
+    if($_POST && estConnecteEtAdmin()){
         //je fais les controles sur les champs 
         $controleChamps = champVide($_POST);
         $errorInscription = $controleChamps['champsvides'];
-
+        //je test si l'id prod envoyé en post est identique à celui envoyé en get
         if($errorInscription['nbError']==0) {
             //il n'y a pas de champs vide donc je continue de tester les champs
 
             $listeChamps =  $controleChamps['champsvalides']; // cette variable contient tous les paramètres à envyer pour la requete sql.
 
             //controle sur la photo
-            if($_FILES['photo']['name']){
-            
+            if(!empty($_FILES['photo']['name'])){
                 $uploadPhoto = UploadPhoto($_FILES['photo']);
                 echo $uploadPhoto['message'];
                 $listeChamps['photo']=$uploadPhoto['nom']; // le nom du fichier photo
-            }else{
+            }elseif(empty($_FILES['photo']['name']) && empty($_POST['photo'])){
                 $listeChamps['photo']='';
             }
-
-
 
             //je gere le paramtre 'catégorie' pour la requete
             if(empty($_POST["categorie"])) {
                 $listeChamps['categorie'] = $listeChamps['selectCateg'];
             }
-            unset( $listeChamps['selectCateg']);
-
-            $sql = "INSERT INTO produit values (NULL, :reference, :categorie, :titre, :description, :couleur, :taille, :public, :photo, :prix, :stock)";
+            unset($listeChamps['selectCateg']);
+            
+            $sql = "REPLACE INTO produit values (:id_produit, :reference, :categorie, :titre, :description, :couleur, :taille, :public, :photo, :prix, :stock)";
            
+            vdm($listeChamps);
             $insert = executeRequete($sql,  $listeChamps);
-            header("location:?action=affichage");
-            exit();
+            $_GET['action']='affichage';
         }
     }
 
@@ -145,7 +162,6 @@
                         //le produit existe dans la base
                         $_GET['action']='ajout';
                         $_POST=$produitAModifier->fetch(PDO::FETCH_ASSOC);
-                        vdm($_GET);
                     }
                 }else{
                     //l'action correspond à 'modifier' mais le 2eme parametre id est différent 
@@ -164,7 +180,13 @@
             
             //formulaire pour ajouter ou modifier un produit
             ?>
+            <!-- ========================== 
+                DEBUT DE FORMULAIRE 
+                ============================ -->
             <form id="produit" action="" method="post" enctype="multipart/form-data">
+            <!-- un champs input avec l'id_produit si il existe pour modifier le produit sinon un inputvide -->
+            <input type="hidden"  name="id_produit" value="<?= $_POST['id_produit'] ?? 'NULL' ?>">
+
                 <div class="form-group <?= isset($errorInscription['reference']) ? 'has-error' : '' ?>">
                     <label for="reference">Reference</label>
                     <input type="text" class="form-control" id="reference" name="reference" placeholder="saisissez la reference" value="<?= $_POST['reference'] ?? '' ?>">
@@ -197,7 +219,7 @@
                         <?php
                         while($OneCat = $AllCatProduits->fetch(PDO::FETCH_ASSOC)){
                             ?>
-                                <option value="<?=$OneCat['categorie'] ?>" <?= isset($_POST['selectCateg']) && $_POST['selectCateg'] == $OneCat['categorie'] ? 'selected' : '' ?>><?= $OneCat['categorie'] ?></option>
+                                <option value="<?=$OneCat['categorie'] ?>" <?= isset($_POST['categorie']) && $_POST['categorie'] == $OneCat['categorie'] ? 'selected' : '' ?>><?= $OneCat['categorie'] ?></option>
                             <?php
                         }
                         ?>
@@ -225,10 +247,10 @@
                 <div class="form-group <?= isset($errorInscription['taille']) ? 'has-error' : '' ?>">
                     <label for="taille">Taille</label>
                     <select class="form-control" id="taille" name="taille">
-                        <option value="s">S</option>
-                        <option value="m">M</option>
-                        <option value="l">L</option>
-                        <option value="xl">XL</option>
+                        <option value="s" <?= isset($_POST['taille']) && $_POST['taille']=='s' ? 'selected' : '' ?>>S</option>
+                        <option value="m" <?= isset($_POST['taille']) && $_POST['taille']=='m' ? 'selected' : '' ?>>M</option>
+                        <option value="l" <?= isset($_POST['taille']) && $_POST['taille']=='l' ? 'selected' : '' ?>>L</option>
+                        <option value="xl" <?= isset($_POST['taille']) && $_POST['taille']=='xl' ? 'selected' : '' ?>>XL</option>
                     </select>                   
                     <?= $errorInscription['taille'] ?? '' ?>
                 </div>
@@ -237,23 +259,22 @@
                     <label for="public">Public</label>
                     <div class="radio">
                         <label>
-                            <input type="radio" name="public" id="publicm" value="m" checked>
+                            <input type="radio" name="public" id="publicm" value="m" <?= isset($_POST['public']) && $_POST['public']=='m' ? 'checked' : '' ?>>
                             Homme
                         </label>
                     </div>
                     <div class="radio">
                         <label>
-                            <input type="radio" name="public" id="publicmf" value="f">
+                            <input type="radio" name="public" id="publicf" value="f" <?= isset($_POST['public']) && $_POST['public']=='f' ? 'checked' : '' ?>>
                             Femme
                         </label>
                     </div>
                     <div class="radio">
                         <label>
-                            <input type="radio" name="public" id="publicmmixte" value="mixte">
+                            <input type="radio" name="public" id="publicmmixte" value="mixte" <?= isset($_POST['public']) && $_POST['public']=='mixte' ? 'checked' : '' ?>>
                             Mixte
                         </label>
                     </div>
-
                     <?= $errorInscription['public'] ?? '' ?>
                 </div>
 
@@ -263,8 +284,10 @@
                     <?= $errorInscription['photo'] ?? '' ?>
                 </div>
                 <!-- si il y a déjà une photo dans la base, je l'affiche dans la balise img -->
+                
                 <?= !empty($_POST['photo']) ? 
-                    '<img src="'.ROOT.'photos'.$_POST['photo'].'" alt="" title="" />'
+                    '<input type="hidden" name="photo" value="'.$_POST['photo'].'">
+                    <img src="'.RACINE_SITE.'photos/'.$_POST['photo'].'" alt="" title="" />'
                     : '' 
                 ?>
 
@@ -280,7 +303,7 @@
                     <?= $errorInscription['stock'] ?? '' ?>
                 </div>
                 
-                <button type="submit" class="btn btn-primary">Créez le Produit</button>
+                <button type="submit" class="btn btn-primary"><?= isset($produitAModifier) ? 'Modifier votre produit' : 'Créez le Produit'?></button>
                 <?=  $errorLog ?? '' ?>
             </form>
             <?php

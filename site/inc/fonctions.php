@@ -141,9 +141,72 @@
         }
     }
 
-    function nbArticlesPanier() {
+   
+/*  =============================================================================================================
+=================== FONCTIONS PANIER ============================================================================ 
+===============================================================================================================*/
 
+    function creationPanier()
+    {
+        // si le panier n'existe pas on le crée vide
+        if ( !isset($_SESSION['panier']) ) 
+        {
+            $_SESSION['panier'] = array();
+            $_SESSION['panier']['id_produit'] = array();
+            $_SESSION['panier']['quantite'] = array();
+            $_SESSION['panier']['prix'] = array();
+        }
     }
 
+    function ajouterProduitDansPanier($id_produit,$quantite,$prix) 
+    {
+        creationPanier();
+
+        $position_produit = array_search( $id_produit,$_SESSION['panier']['id_produit']);
+
+        if ( $position_produit === false) 
+        {
+            $_SESSION['panier']['id_produit'][]=$id_produit;
+            $_SESSION['panier']['quantite'][]=$quantite;
+            $_SESSION['panier']['prix'][]=$prix;
+        }
+        else 
+        {
+            $_SESSION['panier']['quantite'][$position_produit] += $quantite;
+        }
+        
+    }
+
+
+    function nbArticlesPanier()
+    {   
+        $nb = '';
+        if ( isset($_SESSION['panier']['id_produit']) ) 
+        {
+            $nb = array_sum($_SESSION['panier']['quantite']);
+        
+            if ($nb != 0) 
+            {
+                $nb = '<span class= "badge">' .$nb. '</span> ('.montantTotal() .' €)';
+            }
+            else 
+            {
+                $nb='';
+            }
+        }    
+        return $nb;
+    }
+
+    function montantTotal()
+    {
+        $total=0;
+
+        for($i=0; $i<count($_SESSION['panier']['id_produit']); $i++)
+        {
+            $total += $_SESSION['panier']['quantite'][$i] * $_SESSION['panier']['prix'][$i];
+        }
+
+        return $total;
+    }
   
 ?>
