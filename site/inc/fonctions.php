@@ -208,5 +208,19 @@
 
         return $total;
     }
+
+    function retirerProduitPanier($id_prod){
+        $position_produit = array_search( $id_prod,$_SESSION['panier']['id_produit']);
+        if ( $position_produit === false) 
+        {
+           //prod n'existe pas : erreur !!
+        }
+        else 
+        {
+            array_splice($_SESSION['panier']['id_produit'], $position_produit, 1);
+            array_splice($_SESSION['panier']['quantite'], $position_produit, 1);
+            array_splice($_SESSION['panier']['prix'], $position_produit, 1);
+        }
+    }
   
 ?>

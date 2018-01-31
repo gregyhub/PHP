@@ -46,7 +46,8 @@
     </header>
     <div class="container">
 
-    <?= $content ?? '' ?>
+
+    <?= $content  ?>
 
 
 
