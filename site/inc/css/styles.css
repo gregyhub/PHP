@@ -11,3 +11,7 @@ body{
 .thumbnail:hover .btnPanier{
     display:block;
 }
+
+table .prod{
+    display:none;
+}

@@ -3,6 +3,10 @@
 //document ready
 $(function(){
 
+
+    /*===============================================================================
+    ================== FONCTION AJAX POUR LE PSEUDO / Page Inscription.php============
+    ==================================================================================*/
     $('#inscription #pseudo').on('focus', function(e){
        $('#pseudo').parent().find('.alert').remove();
        $('#pseudo').parent().removeClass('has-error');
@@ -41,7 +45,9 @@ $(function(){
         }
     });
 
-    /* FONCTIONS pour la gestion des catégories dans le formulaire gestion_boutique */
+    /* ======================================================================================================
+    ======  FONCTIONS pour la gestion des catégories dans le formulaire gestion_boutique  ====================
+    ====================================================================================================== */
     $('#selectCateg').on("change", function(){
         if($(this).val()=='nouvelleCat'){
             $('.ajout-categ').show();
@@ -51,5 +57,16 @@ $(function(){
             $('.ajout-categ').val($(this).val());
         }
     });
+
+    
+    /* ======================================================================================================
+    ======  FONCTIONS POUR LA GESTION DES COMMANDES  ========================================================
+    ====================================================================================================== */
+
+    $(".detailCmd").on('click', function(e){
+        var idTab = $(this).attr('data');
+        $('#'+idTab).toggle();
+    });
+
 
 });
