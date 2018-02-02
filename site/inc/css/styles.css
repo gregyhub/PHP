@@ -12,6 +12,11 @@ body{
     display:block;
 }
 
-table .prod{
+table.prod{
+    position: relative;
+    display:none;
+}
+
+span.glyphicon-minus{
     display:none;
 }

@@ -10,7 +10,6 @@
             exit;
         }
     }
-
     /*
     FONCTION pour executer les requetes
     */
@@ -20,7 +19,6 @@
                 $params[$indice] = htmlspecialchars($param, ENT_QUOTES);
             }
          }
-
          global $pdo;
          $r = $pdo->prepare($sql);
          $r->execute($params);

@@ -1,9 +1,13 @@
 <?php
     require_once('../inc/init.php');
 
-
-   if(isset($_GET['traitement']) && estConnecteEtAdmin()){
-      echo 'toto';
+   
+   if(isset($_GET['traitement']) && $_GET['traitement']=='envoi' && estConnecteEtAdmin()){
+        $sql='UPDATE commande SET etat = "envoyé" WHERE id_commande=:id_commande';
+        $param = array(
+            "id_commande" => $_GET["id_commande"]
+        );
+        $up = executeRequete($sql,$param);
    }
  
 
@@ -18,7 +22,7 @@
             </div>
             
         <?php
-        $content = ob_get_clean();
+        $AffCmd = ob_get_clean();
 
     }else {
         ob_start();
@@ -30,8 +34,14 @@
          $sql = 'SELECT c.id_commande, c.montant, c.date_enregistrement, c.etat,
                             m.id_membre, m.pseudo, m.nom, m.prenom
                  FROM membre m, commande c WHERE m.id_membre = c.id_membre';
-        $AllCommandes = executeRequete($sql);
+        $param = array();   
+        if(!empty($_POST['recherche'])) { // seuelemtn si je fais une recherche
+            $sql .= ' AND id_commande='.$_POST['recherche']; 
+            $param = array('id' => $_POST['recherche']);
+        }
+        $AllCommandes = executeRequete($sql,$param);
 
+    
         if($AllCommandes->rowCount() == 0) {
             //pas de commande dans la base
             ?>
@@ -58,7 +68,12 @@
                
                 ?>
                 <tr>
-                    <td class="text-center"><button class="detailCmd" data="<?= $commande['id_commande'] ?>" type="button" href="" title="Affichez le détail de la commande"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button></th>
+                    <td class="text-center">
+                        <button class="detailCmd" data="<?= $commande['id_commande'] ?>" type="button" href="" title="Affichez le détail de la commande">
+                            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                            <span class="glyphicon glyphicon-minus" aria-hidden="true">
+                        </button>
+                    </th>
                     <td class="text-center"><?= $commande['id_commande'] ?></th>
                     <td class="text-center"><?= $commande['pseudo'] ?></th>
                     <td class="text-center"><?= $commande['prenom'].' '.$commande['nom'] ?></th>
@@ -66,7 +81,7 @@
                     <td class="text-center"><?= $commande['montant'] ?>€</th>
                     <td class="text-center <?= $commande['etat']=='en cours de traitement' ? 'text-danger' : 'text-success' ?>"><?= $commande['etat'] ?></th>
                     <td class="text-center">
-                        <?= $commande['etat']=='en cours de traitement' ? '<a href="?traitement=envoi">valider la commande</a>' : 'mettre la commande à l\'état en cours' ?>
+                        <?= $commande['etat']=='en cours de traitement' ? '<a href="?traitement=envoi&id_commande='.$commande['id_commande'].'">valider la commande</a>' : 'mettre la commande à l\'état en cours' ?>
                     </th>
                 </tr>
                 <tr>
@@ -108,12 +123,23 @@
         <?php
         }
 
-        $content = ob_get_clean();
+        $AffCmd = ob_get_clean();
 
     } //fin du else CONNECTE et ADMIN
-    
+    ob_start();
+    ?>
 
-   
+    <div class="row">
+        <form method="post" action="" class="navbar-form navbar-left">
+            <div class="form-group">
+                <input type="text" name="recherche" class="form-control" placeholder="Search">
+            </div>
+            <button type="submit" class="btn btn-default">Submit</button>
+        </form>
+        <?= $AffCmd ?>
+    </div>
+    <?php
+    $content = ob_get_clean();
 
     include('../inc/gabarit.php');
 

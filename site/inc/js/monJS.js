@@ -64,8 +64,14 @@ $(function(){
     ====================================================================================================== */
 
     $(".detailCmd").on('click', function(e){
+        //je récupère la valeur de l'attribut "data" du bouton sur la ligne commande. J'y ai inseré dynamiquement en php le numéro de l'id_commande qui fait référence à l'attribut "id"  du tableau détail commande.
         var idTab = $(this).attr('data');
-        $('#'+idTab).toggle();
+        //je peux donc sélectionner en JQ ce tableau spécifique et l'afficher
+       // $('#'+idTab).toggle();
+        //puis je masque le bouton 'plus' pour afficher le bouton 'moins'
+        $(this).find('span').toggle();
+        $( '#'+idTab  ).toggle( 'blind', 500 );
+        
     });
 
 
