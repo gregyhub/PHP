@@ -1,6 +1,0 @@
-un utilisateur à 0 à N commande.
-
-1 - pour un utilisateur donné, celui qui est connecté, donc identifié avec id_membre en SESSION, je veux récupérer tous les "id_commande" qu'il passé.
-
-2 - Pour chaque commande: je veux  récupérer les informations du ou des produits acheté
-    -pour
