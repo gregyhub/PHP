@@ -1,0 +1,22 @@
+body{
+    margin-top:60px;
+}
+
+.btnPanier{
+    display:none;
+    position:absolute;
+    bottom:70px;
+    left:80px;
+}
+.thumbnail:hover .btnPanier{
+    display:block;
+}
+
+table.prod{
+    position: relative;
+    display:none;
+}
+
+span.glyphicon-minus{
+    display:none;
+}
